@@ -11,7 +11,7 @@
         <relativePath/>
     </parent>
 
-    <groupId>br.com.nogueiranogueira.aularefatoracao</groupId>
+    <groupId>br.com.becastellani.aularefatoracao</groupId>
     <artifactId>fintech-legacy-credit</artifactId>
     <version>1.0-SNAPSHOT</version>
     <name>fintech-legacy-credit</name>
@@ -40,7 +40,7 @@
         <dependency>
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
-            <scope>runtime</scope>
+            <version>2.3.232</version>
         </dependency>
 
         <dependency>
@@ -110,6 +110,18 @@
 
     <build>
         <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <annotationProcessorPaths>
+                        <path>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                        </path>
+                    </annotationProcessorPaths>
+                </configuration>
+            </plugin>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>

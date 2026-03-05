@@ -180,7 +180,7 @@ fintech-legacy-credit/
 ├── src/
 │   ├── main/
 │   │   ├── java/
-│   │   │   └── br/com/nogueiranogueira/aularefatoracao/
+│   │   │   └── br/com/becastellani/aularefatoracao/
 │   │   │       ├── Main.java (Spring Boot Application)
 │   │   │       ├── controller/
 │   │   │       │   └── SolicitacaoCreditoController.java
@@ -194,7 +194,7 @@ fintech-legacy-credit/
 │   │       └── application.properties
 │   └── test/
 │       └── java/
-│           └── br.com.nogueiranogueira.aularefatoracao.TestAnaliseCreditoService.java
+│           └── br.com.becastellani.aularefatoracao.TestAnaliseCreditoService.java
 │           └── SolicitacaoCreditoIntegrationTest.java
 └── pom.xml
 ```
@@ -247,6 +247,22 @@ mvn clean install
 Este projeto é parte de um exercício de refatoração de código legado.
 
 ## 👨‍💻 Autor
+Bernardo Castellani, Cesar Pisa, Mario Wilhelms, Matheus Morilla, Mayumi Bogoni
 
-Desenvolvido como exemplo de aplicação Spring Boot com boas práticas de desenvolvimento.
+## Análise Técnica e Dívidas Técnicas
 
+**AnaliseCreditoService.java:**
+- Método `analisarSolicitacao()` com complexidade ciclomática alta - 7 níveis
+- Aninhamento profundo de estruturas condicionais (if dentro de if dentro de if)
+- Uso de `Date` depreciado (`new Date().getDay()`)
+- Falta de separação de responsabilidades
+- Hardcoded valores de regras de negócio (5000, 800, 50000, 700, etc.)
+- Ausência de validação de entrada
+- Lógica duplicada entre PF e PJ
+
+**ProcessadorVendaService.java:**
+- Verificar existência e implementação desta classe
+- Regras que podem ser separadas
+- Método `analisarSolicitacao()` com complexidade ciclomática alta - 7 níveis
+- Separar em enums para tipos de conta
+- Separar as 'palavras soltas' como imposto, valor, frete...

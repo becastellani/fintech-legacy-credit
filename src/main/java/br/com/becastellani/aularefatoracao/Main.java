@@ -1,4 +1,4 @@
-package br.com.nogueiranogueira.aularefatoracao;
+package br.com.becastellani.aularefatoracao;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

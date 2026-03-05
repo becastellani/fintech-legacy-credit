@@ -1,26 +1,19 @@
-package br.com.nogueiranogueira.aularefatoracao.controller;
+package br.com.becastellani.aularefatoracao.controller;
 
-import br.com.nogueiranogueira.aularefatoracao.dto.SolicitacaoCreditoRecord;
-import br.com.nogueiranogueira.aularefatoracao.model.SolicitacaoCredito;
-import br.com.nogueiranogueira.aularefatoracao.service.AnaliseCreditoService;
-import br.com.nogueiranogueira.aularefatoracao.service.ProcessadorAnaliseCreditoService;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
+import br.com.becastellani.aularefatoracao.model.SolicitacaoCredito;
+import br.com.becastellani.aularefatoracao.service.AnaliseCreditoService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-@Tag(name = "Solictações Controller", description = "Endpoints para análise e gerenciamento de solicitações de crédito")
 @RestController
-@RequestMapping("/solicitacoes")
+@RequestMapping("/api/solicitacoes")
 @RequiredArgsConstructor
 @Slf4j
 public class SolicitacaoCreditoController {
@@ -28,11 +21,6 @@ public class SolicitacaoCreditoController {
     @Autowired
     private final AnaliseCreditoService analiseCreditoService;
 
-    @Autowired
-    private final ProcessadorAnaliseCreditoService processadorAnaliseCreditoService;
-
-
-    @Operation(summary = "Analisar solicitação de crédito", description = "Analisa uma solicitação de crédito com base nos parâmetros fornecidos e retorna o resultado da análise.")
     @PostMapping("/analisar")
     public ResponseEntity<Map<String, Object>> analisarSolicitacao(
             @RequestParam String cliente,
@@ -84,27 +72,6 @@ public class SolicitacaoCreditoController {
         }
     }
 
-//    @GetMapping("/por-cliente/{cliente}")
-//    public ResponseEntity<List<SolicitacaoCredito>> obterSolicitacoesPorCliente(@PathVariable String cliente) {
-//        log.info("Buscando solicitações para cliente: {}", cliente);
-//        List<SolicitacaoCredito> solicitacoes = analiseCreditoService.obterSolicitacoesPorCliente(cliente);
-//        return ResponseEntity.ok(solicitacoes);
-//    }
-//
-//    @GetMapping("/aprovadas")
-//    public ResponseEntity<List<SolicitacaoCredito>> obterSolicitacoesAprovadas() {
-//        log.info("Buscando solicitações aprovadas");
-//        List<SolicitacaoCredito> solicitacoes = analiseCreditoService.obterSolicitacoesAprovadas();
-//        return ResponseEntity.ok(solicitacoes);
-//    }
-//
-//    @GetMapping("/reprovadas")
-//    public ResponseEntity<List<SolicitacaoCredito>> obterSolicitacoesReprovadas() {
-//        log.info("Buscando solicitações reprovadas");
-//        List<SolicitacaoCredito> solicitacoes = analiseCreditoService.obterSolicitacoesReprovadas();
-//        return ResponseEntity.ok(solicitacoes);
-//    }
-//
 //    @GetMapping("/total-aprovados/{tipoConta}")
 //    public ResponseEntity<Map<String, Long>> obterTotalAprovadosPorTipo(@PathVariable String tipoConta) {
 //        log.info("Contando solicitações aprovadas para tipo: {}", tipoConta);
@@ -126,6 +93,20 @@ public class SolicitacaoCreditoController {
 //        return ResponseEntity.ok(solicitacoes);
 //    }
 
+    @GetMapping("/por-cliente/{cliente}")
+    public ResponseEntity<List<SolicitacaoCredito>> obterSolicitacoesPorCliente(@PathVariable String cliente) {
+        log.info("Buscando solicitações para cliente: {}", cliente);
+        List<SolicitacaoCredito> solicitacoes = analiseCreditoService.obterSolicitacoesPorCliente(cliente);
+        return ResponseEntity.ok(solicitacoes);
+    }
+
+    @GetMapping("/aprovadas")
+    public ResponseEntity<List<SolicitacaoCredito>> obterSolicitacoesAprovadas() {
+        log.info("Buscando solicitações aprovadas");
+        List<SolicitacaoCredito> solicitacoes = analiseCreditoService.obterSolicitacoesAprovadas();
+        return ResponseEntity.ok(solicitacoes);
+    }
+
     @GetMapping("/saude")
     public ResponseEntity<Map<String, String>> saude() {
         Map<String, String> response = new HashMap<>();
@@ -133,21 +114,4 @@ public class SolicitacaoCreditoController {
         response.put("mensagem", "Aplicação funcionando corretamente");
         return ResponseEntity.ok(response);
     }
-
-    @PostMapping
-    public ResponseEntity<Map<String, String>> analiseCredito(@RequestBody List<SolicitacaoCreditoRecord> solicitacaoCreditoRecords) {
-        try {
-            processadorAnaliseCreditoService.processarLote(solicitacaoCreditoRecords);
-            Map<String, String> response = new HashMap<>();
-            response.put("mensagem", "Solicitações processadas com sucesso");
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            log.error("Erro ao processar solicitações", e);
-            Map<String, String> error = new HashMap<>();
-            error.put("erro", "Erro ao processar solicitações");
-            error.put("mensagem", e.getMessage());
-            return ResponseEntity.badRequest().body(error);
-        }
-    }
 }
-

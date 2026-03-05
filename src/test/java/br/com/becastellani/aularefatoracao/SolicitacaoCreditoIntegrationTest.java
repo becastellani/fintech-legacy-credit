@@ -1,14 +1,15 @@
-package br.com.nogueiranogueira.aularefatoracao;
+package br.com.becastellani.aularefatoracao;
 
-import br.com.nogueiranogueira.aularefatoracao.model.SolicitacaoCredito;
-import br.com.nogueiranogueira.aularefatoracao.repository.SolicitacaoCreditoRepository;
-import br.com.nogueiranogueira.aularefatoracao.service.AnaliseCreditoService;
+import br.com.becastellani.aularefatoracao.model.SolicitacaoCredito;
+import br.com.becastellani.aularefatoracao.repository.SolicitacaoCreditoRepository;
+import br.com.becastellani.aularefatoracao.service.AnaliseCreditoService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.web.context.WebApplicationContext;
 
 import java.util.Arrays;
 import java.util.List;
@@ -18,10 +19,11 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest
-@AutoConfigureMockMvc
 public class SolicitacaoCreditoIntegrationTest {
 
     @Autowired
+    private WebApplicationContext webApplicationContext;
+
     private MockMvc mockMvc;
 
     @Autowired
@@ -32,6 +34,9 @@ public class SolicitacaoCreditoIntegrationTest {
 
     @BeforeEach
     public void setUp() {
+        mockMvc = MockMvcBuilders
+                .webAppContextSetup(webApplicationContext)
+                .build();
         repository.deleteAll();
     }
 
@@ -151,4 +156,3 @@ public class SolicitacaoCreditoIntegrationTest {
 //        assertEquals(1, totalPJ, "Deve haver 1 solicitação aprovada para PJ");
 //    }
 }
-

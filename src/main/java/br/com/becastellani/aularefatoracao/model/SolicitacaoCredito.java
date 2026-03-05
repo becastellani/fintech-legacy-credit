@@ -1,4 +1,4 @@
-package br.com.nogueiranogueira.aularefatoracao.model;
+package br.com.becastellani.aularefatoracao.model;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
