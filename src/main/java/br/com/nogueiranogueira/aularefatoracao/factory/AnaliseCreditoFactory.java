@@ -19,7 +19,6 @@ import br.com.nogueiranogueira.aularefatoracao.strategy.AnaliseStrategyPJ;
 public class AnaliseCreditoFactory {
 
     private AnaliseCreditoFactory() {
-        // Classe utilitária — não deve ser instanciada
     }
 
     /**
