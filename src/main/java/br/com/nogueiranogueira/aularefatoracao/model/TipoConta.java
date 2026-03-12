@@ -1,4 +1,4 @@
-package br.com.becastellani.aularefatoracao.model;
+package br.com.nogueiranogueira.aularefatoracao.model;
 
 public enum TipoConta {
     PF,

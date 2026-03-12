@@ -11,7 +11,7 @@
         <relativePath/>
     </parent>
 
-    <groupId>br.com.becastellani.aularefatoracao</groupId>
+    <groupId>br.com.nogueiranogueira.aularefatoracao</groupId>
     <artifactId>fintech-legacy-credit</artifactId>
     <version>1.0-SNAPSHOT</version>
     <name>fintech-legacy-credit</name>

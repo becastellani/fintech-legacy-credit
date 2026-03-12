@@ -1,8 +1,8 @@
-package br.com.becastellani.aularefatoracao;
+package br.com.nogueiranogueira.aularefatoracao;
 
-import br.com.becastellani.aularefatoracao.model.SolicitacaoCredito;
-import br.com.becastellani.aularefatoracao.repository.SolicitacaoCreditoRepository;
-import br.com.becastellani.aularefatoracao.service.AnaliseCreditoService;
+import br.com.nogueiranogueira.aularefatoracao.model.SolicitacaoCredito;
+import br.com.nogueiranogueira.aularefatoracao.repository.SolicitacaoCreditoRepository;
+import br.com.nogueiranogueira.aularefatoracao.service.AnaliseCreditoService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

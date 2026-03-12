@@ -194,7 +194,7 @@ fintech-legacy-credit/
 │   │       └── application.properties
 │   └── test/
 │       └── java/
-│           └── br.com.becastellani.aularefatoracao.TestAnaliseCreditoService.java
+│           └── br.com.nogueiranogueira.aularefatoracao.TestAnaliseCreditoService.java
 │           └── SolicitacaoCreditoIntegrationTest.java
 └── pom.xml
 ```

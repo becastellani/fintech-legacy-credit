@@ -1,10 +1,19 @@
 package br.com.nogueiranogueira.aularefatoracao.strategy;
 
-import br.com.nogueiranogueira.aularefatoracao.dto.SolicitacaoCreditoRecord;
+import br.com.nogueiranogueira.aularefatoracao.model.TipoConta;
 
 public interface AnaliseStrategy {
 
-    boolean analisar(SolicitacaoCreditoRecord solicitacao);
-    boolean elegivel(SolicitacaoCreditoRecord solicitacao);
+    /**
+     * Verifica se esta strategy é elegível para o tipo de conta informado.
+     */
+    boolean elegivel(TipoConta tipoConta);
 
+    /**
+     * Executa a análise de crédito conforme as regras do tipo de conta.
+     *
+     * @return true se aprovado, false se reprovado
+     */
+    boolean analisar(double valor, int score);
 }
+

@@ -1,10 +1,7 @@
-package br.com.becastellani.aularefatoracao;
+package br.com.nogueiranogueira.aularefatoracao;
 
-import br.com.becastellani.aularefatoracao.repository.SolicitacaoCreditoRepository;
-import br.com.becastellani.aularefatoracao.service.AnaliseCreditoService;
-import br.com.becastellani.aularefatoracao.strategy.AnaliseStrategy;
-import br.com.becastellani.aularefatoracao.strategy.AnaliseStrategyPF;
-import br.com.becastellani.aularefatoracao.strategy.AnaliseStrategyPJ;
+import br.com.nogueiranogueira.aularefatoracao.repository.SolicitacaoCreditoRepository;
+import br.com.nogueiranogueira.aularefatoracao.service.AnaliseCreditoService;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -22,9 +19,8 @@ public class TestAnaliseCreditoService {
 
     @Before
     public void setup() {
-        List<AnaliseStrategy> strategies = List.of(new AnaliseStrategyPF(), new AnaliseStrategyPJ());
         SolicitacaoCreditoRepository repository = Mockito.mock(SolicitacaoCreditoRepository.class);
-        service = new AnaliseCreditoService(strategies, repository);
+        service = new AnaliseCreditoService(repository);
     }
 
     // Testes para casos de reprovação básicos

@@ -1,8 +1,8 @@
-package br.com.becastellani.aularefatoracao.service;
+package br.com.nogueiranogueira.aularefatoracao.service;
 
-import br.com.becastellani.aularefatoracao.model.TipoConta;
-import br.com.becastellani.aularefatoracao.strategy.AnaliseStrategy;
-import lombok.RequiredArgsConstructor;
+import br.com.nogueiranogueira.aularefatoracao.factory.AnaliseCreditoFactory;
+import br.com.nogueiranogueira.aularefatoracao.model.TipoConta;
+import br.com.nogueiranogueira.aularefatoracao.strategy.AnaliseStrategy;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -12,10 +12,7 @@ import java.util.concurrent.Executors;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class ProcessadorCreditoService {
-
-    private final List<AnaliseStrategy> strategies;
 
     /**
      * Processa uma lista de clientes em paralelo usando Virtual Threads (Java 21).
@@ -47,14 +44,8 @@ public class ProcessadorCreditoService {
             return false;
         }
 
-        return strategies.stream()
-                .filter(strategy -> strategy.elegivel(tipo))
-                .findFirst()
-                .map(strategy -> strategy.analisar(valor, score))
-                .orElseGet(() -> {
-                    log.warn("Nenhuma strategy elegível encontrada para tipo: {}", tipoConta);
-                    return false;
-                });
+        AnaliseStrategy strategy = AnaliseCreditoFactory.obterEstrategia(tipo);
+        return strategy.analisar(valor, score);
     }
 }
 

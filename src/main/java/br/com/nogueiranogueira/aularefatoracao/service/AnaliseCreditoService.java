@@ -1,9 +1,10 @@
-package br.com.becastellani.aularefatoracao.service;
+package br.com.nogueiranogueira.aularefatoracao.service;
 
-import br.com.becastellani.aularefatoracao.model.SolicitacaoCredito;
-import br.com.becastellani.aularefatoracao.model.TipoConta;
-import br.com.becastellani.aularefatoracao.repository.SolicitacaoCreditoRepository;
-import br.com.becastellani.aularefatoracao.strategy.AnaliseStrategy;
+import br.com.nogueiranogueira.aularefatoracao.factory.AnaliseCreditoFactory;
+import br.com.nogueiranogueira.aularefatoracao.model.SolicitacaoCredito;
+import br.com.nogueiranogueira.aularefatoracao.model.TipoConta;
+import br.com.nogueiranogueira.aularefatoracao.repository.SolicitacaoCreditoRepository;
+import br.com.nogueiranogueira.aularefatoracao.strategy.AnaliseStrategy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -17,7 +18,6 @@ public class AnaliseCreditoService {
 
     private static final int SCORE_MINIMO = 500;
 
-    private final List<AnaliseStrategy> strategies;
     private final SolicitacaoCreditoRepository repository;
 
     public boolean analisarSolicitacao(String cliente, double valor, int score,
@@ -51,14 +51,8 @@ public class AnaliseCreditoService {
 
         consultarBureauCredito();
 
-        boolean aprovado = strategies.stream()
-                .filter(strategy -> strategy.elegivel(tipo))
-                .findFirst()
-                .map(strategy -> strategy.analisar(valor, score))
-                .orElseGet(() -> {
-                    log.warn("Nenhuma strategy encontrada para tipo: {}", tipoConta);
-                    return false;
-                });
+        AnaliseStrategy strategy = AnaliseCreditoFactory.obterEstrategia(tipo);
+        boolean aprovado = strategy.analisar(valor, score);
 
         String motivo = aprovado ? null : "Reprovado pelas regras de " + tipoConta;
         persistirResultado(cliente, valor, score, negativado, tipoConta, aprovado, motivo);

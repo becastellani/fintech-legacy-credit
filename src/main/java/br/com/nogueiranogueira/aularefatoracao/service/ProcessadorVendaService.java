@@ -1,7 +1,7 @@
-package br.com.becastellani.aularefatoracao.service;
+package br.com.nogueiranogueira.aularefatoracao.service;
 
-import br.com.becastellani.aularefatoracao.model.constantes.RegiaoFrete;
-import br.com.becastellani.aularefatoracao.model.constantes.TipoProduto;
+import br.com.nogueiranogueira.aularefatoracao.model.constantes.RegiaoFrete;
+import br.com.nogueiranogueira.aularefatoracao.model.constantes.TipoProduto;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 

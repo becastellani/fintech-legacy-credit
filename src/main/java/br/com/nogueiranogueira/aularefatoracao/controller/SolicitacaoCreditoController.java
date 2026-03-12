@@ -1,7 +1,7 @@
-package br.com.becastellani.aularefatoracao.controller;
+package br.com.nogueiranogueira.aularefatoracao.controller;
 
-import br.com.becastellani.aularefatoracao.model.SolicitacaoCredito;
-import br.com.becastellani.aularefatoracao.service.AnaliseCreditoService;
+import br.com.nogueiranogueira.aularefatoracao.model.SolicitacaoCredito;
+import br.com.nogueiranogueira.aularefatoracao.service.AnaliseCreditoService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;

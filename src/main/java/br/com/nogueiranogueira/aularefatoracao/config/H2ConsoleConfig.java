@@ -1,4 +1,4 @@
-package br.com.becastellani.aularefatoracao.config;
+package br.com.nogueiranogueira.aularefatoracao.config;
 
 import org.h2.server.web.JakartaWebServlet;
 import org.springframework.boot.web.servlet.ServletRegistrationBean;

@@ -1,6 +1,6 @@
-package br.com.becastellani.aularefatoracao.repository;
+package br.com.nogueiranogueira.aularefatoracao.repository;
 
-import br.com.becastellani.aularefatoracao.model.SolicitacaoCredito;
+import br.com.nogueiranogueira.aularefatoracao.model.SolicitacaoCredito;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

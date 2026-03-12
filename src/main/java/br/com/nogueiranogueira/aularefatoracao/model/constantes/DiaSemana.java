@@ -1,4 +1,4 @@
-package br.com.becastellani.aularefatoracao.model.constantes;
+package br.com.nogueiranogueira.aularefatoracao.model.constantes;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;

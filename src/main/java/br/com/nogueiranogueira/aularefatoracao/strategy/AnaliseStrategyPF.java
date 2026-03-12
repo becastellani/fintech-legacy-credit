@@ -1,38 +1,32 @@
 package br.com.nogueiranogueira.aularefatoracao.strategy;
 
-import br.com.nogueiranogueira.aularefatoracao.dto.SolicitacaoCreditoRecord;
-import br.com.nogueiranogueira.aularefatoracao.dto.TipoConta;
+import br.com.nogueiranogueira.aularefatoracao.model.TipoConta;
+import br.com.nogueiranogueira.aularefatoracao.model.constantes.DiaSemana;
+import lombok.extern.slf4j.Slf4j;
 
-import java.math.BigDecimal;
-import java.time.DayOfWeek;
-import java.time.LocalDate;
-
+@Slf4j
 public class AnaliseStrategyPF implements AnaliseStrategy {
 
-    private static final BigDecimal LIMITE_ALTO_VALOR = new BigDecimal("5000");
-    private static final int SCORE_MINIMO = 800;
+    private static final double VALOR_LIMITE_PF          = 5_000.0;
+    private static final int    SCORE_MINIMO_VALOR_ALTO  = 800;
 
     @Override
-    public boolean analisar(SolicitacaoCreditoRecord solicitacao) {
-        // Regra 1: Valor alto com score baixo
-        if (solicitacao.valor().compareTo(LIMITE_ALTO_VALOR) > 0 && solicitacao.score() < SCORE_MINIMO) {
-            System.out.println("PF Reprovado: Risco alto.");
+    public boolean elegivel(TipoConta tipoConta) {
+        return TipoConta.PF == tipoConta;
+    }
+
+    @Override
+    public boolean analisar(double valor, int score) {
+        if (valor > VALOR_LIMITE_PF && score < SCORE_MINIMO_VALOR_ALTO) {
+            log.warn("Reprovado PF: valor alto (R$ {}) com score médio ({})", valor, score);
             return false;
         }
-
-        // Regra 2: Fim de semana (Usando Java Time API moderno)
-        DayOfWeek diaHoje = LocalDate.now().getDayOfWeek();
-        if (diaHoje == DayOfWeek.SATURDAY || diaHoje == DayOfWeek.SUNDAY) {
-            System.out.println("PF: Aprovação manual necessária no fim de semana.");
+        if (DiaSemana.isFinaldeSemana()) {
+            log.warn("Reprovado PF: aprovação manual necessária no fim de semana");
             return false;
         }
-
-        System.out.println("PF Aprovado.");
+        log.info("Aprovado PF");
         return true;
     }
-
-    @Override
-    public boolean elegivel(SolicitacaoCreditoRecord solicitacao) {
-        return solicitacao.tipo().equals(TipoConta.PF);
-    }
 }
+

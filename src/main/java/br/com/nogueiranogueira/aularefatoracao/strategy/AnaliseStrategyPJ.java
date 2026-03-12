@@ -1,26 +1,27 @@
 package br.com.nogueiranogueira.aularefatoracao.strategy;
 
-import br.com.nogueiranogueira.aularefatoracao.dto.SolicitacaoCreditoRecord;
-import br.com.nogueiranogueira.aularefatoracao.dto.TipoConta;
+import br.com.nogueiranogueira.aularefatoracao.model.TipoConta;
+import lombok.extern.slf4j.Slf4j;
 
-import java.math.BigDecimal;
-
+@Slf4j
 public class AnaliseStrategyPJ implements AnaliseStrategy {
 
-    private static final BigDecimal LIMITE_PJ = new BigDecimal("50000");
+    private static final double VALOR_LIMITE_PJ         = 50_000.0;
+    private static final int    SCORE_MINIMO_VALOR_ALTO = 700;
 
     @Override
-    public boolean analisar(SolicitacaoCreditoRecord solicitacao) {
-        if (solicitacao.valor().compareTo(LIMITE_PJ) > 0 && solicitacao.score() < 700) {
-            System.out.println("PJ Reprovado: Risco corporativo.");
+    public boolean elegivel(TipoConta tipoConta) {
+        return TipoConta.PJ == tipoConta;
+    }
+
+    @Override
+    public boolean analisar(double valor, int score) {
+        if (valor > VALOR_LIMITE_PJ && score < SCORE_MINIMO_VALOR_ALTO) {
+            log.warn("Reprovado PJ: risco alto — valor R$ {} com score {}", valor, score);
             return false;
         }
-        System.out.println("PJ Aprovado.");
+        log.info("Aprovado PJ");
         return true;
     }
-
-    @Override
-    public boolean elegivel(SolicitacaoCreditoRecord solicitacao) {
-        return solicitacao.tipo().equals(TipoConta.PJ);
-    }
 }
+
