@@ -178,32 +178,30 @@ mvn clean test jacoco:report
 
 ```
 fintech-legacy-credit/
-├── src/
-│   ├── main/
-│   │   ├── java/
-│   │   │   └── br/com/nogueiranogueira/aularefatoracao/
-│   │   │       ├── Main.java (Spring Boot Application)
-│   │   │       ├── controller/
-│   │   │       │   └── SolicitacaoCreditoController.java
-│   │   │       ├── factory/
-│   │   │       │   └── AnaliseCreditoFactory.java
-│   │   │       ├── model/
-│   │   │       │   ├── SolicitacaoCredito.java
-│   │   │       │   └── TipoConta.java
-│   │   │       ├── repository/
-│   │   │       │   └── SolicitacaoCreditoRepository.java
-│   │   │       ├── service/
-│   │   │       │   └── AnaliseCreditoService.java
-│   │   │       ├── strategy/
-│   │   │       │   └── AnaliseStrategy.java
-│   │   │       └── util/
-│   │   │           └── ValidadorDocumento.java
-│   │   └── resources/
-│   │       └── application.properties
-│   └── test/
-│       └── java/
-│           └── br.com.nogueiranogueira.aularefatoracao.TestAnaliseCreditoService.java
-│           └── SolicitacaoCreditoIntegrationTest.java
+├── src/main/java/br/com/nogueiranogueira/aularefatoracao/
+│   ├── Main.java (Spring Boot Application)
+│   ├── controller/
+│   │   └── SolicitacaoCreditoController.java
+│   ├── factory/
+│   │   └── AnaliseCreditoFactory.java
+│   ├── model/
+│   │   ├── SolicitacaoCredito.java (Entidade com campo documento)
+│   │   └── TipoConta.java
+│   ├── repository/
+│   │   └── SolicitacaoCreditoRepository.java
+│   ├── service/
+│   │   ├── ServicoAnaliseRisco.java (Interface para Adapter)
+│   │   ├── AnaliseCreditoService.java
+│   │   ├── adapter/
+│   │   │   └── SerasaSoapAdapter.java (Padrão Adapter)
+│   │   └── reports/
+│   │       ├── GeradorRelatorioTemplate.java (Padrão Template Method)
+│   │       ├── RelatorioCSV.java
+│   │       └── RelatorioPDF.java
+│   ├── strategy/
+│   │   └── AnaliseStrategy.java
+│   └── util/
+│       └── ValidadorDocumento.java (Validação CPF/CNPJ)
 └── pom.xml
 ```
 
