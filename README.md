@@ -84,6 +84,7 @@ curl -X POST "http://localhost:8080/api/solicitacoes/analisar?cliente=João%20Si
 **Resposta:**
 ```json
 {
+  "documento": "12345678909",
   "cliente": "João Silva",
   "valor": 5000.0,
   "score": 750,
@@ -180,16 +181,23 @@ fintech-legacy-credit/
 ├── src/
 │   ├── main/
 │   │   ├── java/
-│   │   │   └── br/com/becastellani/aularefatoracao/
+│   │   │   └── br/com/nogueiranogueira/aularefatoracao/
 │   │   │       ├── Main.java (Spring Boot Application)
 │   │   │       ├── controller/
 │   │   │       │   └── SolicitacaoCreditoController.java
-│   │   │       ├── service/
-│   │   │       │   └── AnaliseCreditoService.java
+│   │   │       ├── factory/
+│   │   │       │   └── AnaliseCreditoFactory.java
+│   │   │       ├── model/
+│   │   │       │   ├── SolicitacaoCredito.java
+│   │   │       │   └── TipoConta.java
 │   │   │       ├── repository/
 │   │   │       │   └── SolicitacaoCreditoRepository.java
-│   │   │       └── model/
-│   │   │           └── SolicitacaoCredito.java
+│   │   │       ├── service/
+│   │   │       │   └── AnaliseCreditoService.java
+│   │   │       ├── strategy/
+│   │   │       │   └── AnaliseStrategy.java
+│   │   │       └── util/
+│   │   │           └── ValidadorDocumento.java
 │   │   └── resources/
 │   │       └── application.properties
 │   └── test/
@@ -202,6 +210,10 @@ fintech-legacy-credit/
 ## 🔐 Regras de Negócio
 
 ### Critérios de Aprovação
+
+**Documentação (Nova Regra)**
+É obrigatório informar CPF (11 dígitos) ou CNPJ (14 dígitos) válido.
+Documentos com formatação incorreta ou sequências repetidas são reprovados automaticamente.
 
 **Pessoa Física (PF):**
 - Score mínimo: 500

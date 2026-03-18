@@ -19,6 +19,10 @@ public class SolicitacaoCredito {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @NotBlank(message = "O documento (CPF/CNPJ) não pode ser vazio")
+    @Column(nullable = false, length = 18)
+    private String documento;
+
     @NotBlank(message = "Cliente não pode ser vazio")
     @Column(nullable = false)
     private String cliente;

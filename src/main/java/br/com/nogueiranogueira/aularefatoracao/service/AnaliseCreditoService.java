@@ -5,6 +5,7 @@ import br.com.nogueiranogueira.aularefatoracao.model.SolicitacaoCredito;
 import br.com.nogueiranogueira.aularefatoracao.model.TipoConta;
 import br.com.nogueiranogueira.aularefatoracao.repository.SolicitacaoCreditoRepository;
 import br.com.nogueiranogueira.aularefatoracao.strategy.AnaliseStrategy;
+import br.com.nogueiranogueira.aularefatoracao.util.ValidadorDocumento; 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -19,24 +20,32 @@ public class AnaliseCreditoService {
     private static final int SCORE_MINIMO = 500;
 
     private final SolicitacaoCreditoRepository repository;
+    
+    private final ValidadorDocumento validador;
 
-    public boolean analisarSolicitacao(String cliente, double valor, int score,
+    public boolean analisarSolicitacao(String documento, String cliente, double valor, int score,
                                        boolean negativado, String tipoConta) {
         log.info("Iniciando análise para: {}", cliente);
 
+        if (!validador.isDocumentoValido(documento)) {
+            log.warn("Documento inválido: {}", documento);
+            persistirResultado(documento, cliente, valor, score, negativado, tipoConta, false, "Documento inválido");
+            return false;
+        }
+
         if (valor <= 0) {
             log.warn("Valor inválido: {}", valor);
-            persistirResultado(cliente, valor, score, negativado, tipoConta, false, "Valor inválido");
+            persistirResultado(documento, cliente, valor, score, negativado, tipoConta, false, "Valor inválido");
             return false;
         }
         if (negativado) {
             log.warn("Cliente negativado: {}", cliente);
-            persistirResultado(cliente, valor, score, negativado, tipoConta, false, "Cliente negativado");
+            persistirResultado(documento, cliente, valor, score, negativado, tipoConta, false, "Cliente negativado");
             return false;
         }
         if (score <= SCORE_MINIMO) {
             log.warn("Score baixo: {}", score);
-            persistirResultado(cliente, valor, score, negativado, tipoConta, false, "Score abaixo do mínimo");
+            persistirResultado(documento, cliente, valor, score, negativado, tipoConta, false, "Score abaixo do mínimo");
             return false;
         }
 
@@ -45,7 +54,7 @@ public class AnaliseCreditoService {
             tipo = TipoConta.fromString(tipoConta);
         } catch (IllegalArgumentException e) {
             log.warn("Tipo de conta desconhecido: {}", tipoConta);
-            persistirResultado(cliente, valor, score, negativado, tipoConta, false, "Tipo de conta inválido");
+            persistirResultado(documento, cliente, valor, score, negativado, tipoConta, false, "Tipo de conta inválido");
             return false;
         }
 
@@ -55,13 +64,20 @@ public class AnaliseCreditoService {
         boolean aprovado = strategy.analisar(valor, score);
 
         String motivo = aprovado ? null : "Reprovado pelas regras de " + tipoConta;
-        persistirResultado(cliente, valor, score, negativado, tipoConta, aprovado, motivo);
+        persistirResultado(documento, cliente, valor, score, negativado, tipoConta, aprovado, motivo);
         return aprovado;
     }
 
-    public void processarLote(List<String> clientes) {
-        for (String cliente : clientes) {
-            analisarSolicitacao(cliente, 1000.0, 600, false, "PF");
+    public void processarLote(List<SolicitacaoCredito> solicitacoes) {
+        for (SolicitacaoCredito solicitacao : solicitacoes) {
+            analisarSolicitacao(
+                    solicitacao.getDocumento(),
+                    solicitacao.getCliente(),
+                    solicitacao.getValor(),
+                    solicitacao.getScore(),
+                    solicitacao.getNegativado(),
+                    solicitacao.getTipoConta()
+            );
         }
     }
 
@@ -77,10 +93,11 @@ public class AnaliseCreditoService {
     // Métodos privados
     // ──────────────────────────────────────────────────────────────────
 
-    private void persistirResultado(String cliente, double valor, int score, boolean negativado,
+    private void persistirResultado(String documento, String cliente, double valor, int score, boolean negativado,
                                     String tipoConta, boolean aprovado, String motivo) {
         try {
             SolicitacaoCredito solicitacao = new SolicitacaoCredito();
+            solicitacao.setDocumento(documento); // 5. Salvando o documento na entidade
             solicitacao.setCliente(cliente);
             solicitacao.setValor(valor);
             solicitacao.setScore(score);

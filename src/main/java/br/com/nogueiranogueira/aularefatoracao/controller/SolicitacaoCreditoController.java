@@ -23,18 +23,21 @@ public class SolicitacaoCreditoController {
 
     @PostMapping("/analisar")
     public ResponseEntity<Map<String, Object>> analisarSolicitacao(
+            @RequestParam String documento,
             @RequestParam String cliente,
             @RequestParam Double valor,
             @RequestParam Integer score,
             @RequestParam(defaultValue = "false") Boolean negativado,
             @RequestParam(defaultValue = "PF") String tipoConta) {
 
-        log.info("Recebida requisição de análise para cliente: {}", cliente);
+        log.info("Recebida requisição de análise para cliente: {} com documento: {}", cliente, documento);
 
         try {
-            boolean aprovado = analiseCreditoService.analisarSolicitacao(cliente, valor, score, negativado, tipoConta);
+
+            boolean aprovado = analiseCreditoService.analisarSolicitacao(documento, cliente, valor, score, negativado, tipoConta);
 
             Map<String, Object> response = new HashMap<>();
+            response.put("documento", documento);
             response.put("cliente", cliente);
             response.put("valor", valor);
             response.put("score", score);
@@ -52,15 +55,16 @@ public class SolicitacaoCreditoController {
     }
 
     @PostMapping("/processar-lote")
-    public ResponseEntity<Map<String, String>> processarLote(@RequestBody List<String> clientes) {
-        log.info("Recebida requisição para processar lote com {} clientes", clientes.size());
+    public ResponseEntity<Map<String, String>> processarLote(@RequestBody List<SolicitacaoCredito> solicitacoes) {
+        log.info("Recebida requisição para processar lote com {} solicitações", solicitacoes.size());
 
         try {
-            analiseCreditoService.processarLote(clientes);
+
+            analiseCreditoService.processarLote(solicitacoes);
 
             Map<String, String> response = new HashMap<>();
             response.put("mensagem", "Lote processado com sucesso");
-            response.put("totalClientes", String.valueOf(clientes.size()));
+            response.put("totalSolicitacoes", String.valueOf(solicitacoes.size()));
 
             return ResponseEntity.ok(response);
         } catch (Exception e) {
@@ -71,27 +75,6 @@ public class SolicitacaoCreditoController {
             return ResponseEntity.badRequest().body(error);
         }
     }
-
-//    @GetMapping("/total-aprovados/{tipoConta}")
-//    public ResponseEntity<Map<String, Long>> obterTotalAprovadosPorTipo(@PathVariable String tipoConta) {
-//        log.info("Contando solicitações aprovadas para tipo: {}", tipoConta);
-//        Long total = analiseCreditoService.obterTotalAprovadosPorTipo(tipoConta);
-//
-//        Map<String, Long> response = new HashMap<>();
-//        response.put("tipoConta", Long.valueOf(tipoConta.length())); // Apenas para exemplo
-//        response.put("totalAprovados", total);
-//
-//        return ResponseEntity.ok(response);
-//    }
-//
-//    @GetMapping("/por-periodo")
-//    public ResponseEntity<List<SolicitacaoCredito>> obterSolicitacoesPorPeriodo(
-//            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime inicio,
-//            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fim) {
-//        log.info("Buscando solicitações entre {} e {}", inicio, fim);
-//        List<SolicitacaoCredito> solicitacoes = analiseCreditoService.obterSolicitacoesPorPeriodo(inicio, fim);
-//        return ResponseEntity.ok(solicitacoes);
-//    }
 
     @GetMapping("/por-cliente/{cliente}")
     public ResponseEntity<List<SolicitacaoCredito>> obterSolicitacoesPorCliente(@PathVariable String cliente) {
