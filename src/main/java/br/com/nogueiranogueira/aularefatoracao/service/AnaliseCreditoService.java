@@ -5,7 +5,7 @@ import br.com.nogueiranogueira.aularefatoracao.model.SolicitacaoCredito;
 import br.com.nogueiranogueira.aularefatoracao.model.TipoConta;
 import br.com.nogueiranogueira.aularefatoracao.repository.SolicitacaoCreditoRepository;
 import br.com.nogueiranogueira.aularefatoracao.strategy.AnaliseStrategy;
-import br.com.nogueiranogueira.aularefatoracao.util.ValidadorDocumento; 
+import br.com.nogueiranogueira.aularefatoracao.util.ValidadorDocumento;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -20,8 +20,8 @@ public class AnaliseCreditoService {
     private static final int SCORE_MINIMO = 500;
 
     private final SolicitacaoCreditoRepository repository;
-    
     private final ValidadorDocumento validador;
+    private final ServicoAnaliseRisco servicoAnaliseRisco;
 
     public boolean analisarSolicitacao(String documento, String cliente, double valor, int score,
                                        boolean negativado, String tipoConta) {
@@ -38,11 +38,13 @@ public class AnaliseCreditoService {
             persistirResultado(documento, cliente, valor, score, negativado, tipoConta, false, "Valor inválido");
             return false;
         }
+
         if (negativado) {
             log.warn("Cliente negativado: {}", cliente);
             persistirResultado(documento, cliente, valor, score, negativado, tipoConta, false, "Cliente negativado");
             return false;
         }
+
         if (score <= SCORE_MINIMO) {
             log.warn("Score baixo: {}", score);
             persistirResultado(documento, cliente, valor, score, negativado, tipoConta, false, "Score abaixo do mínimo");
@@ -58,8 +60,16 @@ public class AnaliseCreditoService {
             return false;
         }
 
-        consultarBureauCredito();
+        // Consulta ao bureau de crédito externo via Adapter (SOAP/Serasa)
+        boolean aprovadoPeloBureau = consultarBureauCredito(documento, valor, score);
+        if (!aprovadoPeloBureau) {
+            log.warn("Solicitação reprovada pelo bureau externo para documento: {}", documento);
+            persistirResultado(documento, cliente, valor, score, negativado, tipoConta, false,
+                    "Reprovado pelo bureau de crédito externo");
+            return false;
+        }
 
+        // Regras internas de negócio via Strategy
         AnaliseStrategy strategy = AnaliseCreditoFactory.obterEstrategia(tipo);
         boolean aprovado = strategy.analisar(valor, score);
 
@@ -69,14 +79,14 @@ public class AnaliseCreditoService {
     }
 
     public void processarLote(List<SolicitacaoCredito> solicitacoes) {
-        for (SolicitacaoCredito solicitacao : solicitacoes) {
+        for (SolicitacaoCredito s : solicitacoes) {
             analisarSolicitacao(
-                    solicitacao.getDocumento(),
-                    solicitacao.getCliente(),
-                    solicitacao.getValor(),
-                    solicitacao.getScore(),
-                    solicitacao.getNegativado(),
-                    solicitacao.getTipoConta()
+                    s.getDocumento(),
+                    s.getCliente(),
+                    s.getValor(),
+                    s.getScore(),
+                    s.getNegativado(),
+                    s.getTipoConta()
             );
         }
     }
@@ -93,11 +103,24 @@ public class AnaliseCreditoService {
     // Métodos privados
     // ──────────────────────────────────────────────────────────────────
 
+    /**
+     * Consulta o bureau de crédito externo via Adapter (padrão Adapter).
+     * Monta um DTO transiente com os dados mínimos necessários para a chamada.
+     */
+    private boolean consultarBureauCredito(String documento, double valor, int score) {
+        log.info("Consultando bureau de crédito externo para documento: {}", documento);
+        SolicitacaoCredito dto = new SolicitacaoCredito();
+        dto.setDocumento(documento);
+        dto.setValor(valor);
+        dto.setScore(score);
+        return servicoAnaliseRisco.avaliarCredito(dto);
+    }
+
     private void persistirResultado(String documento, String cliente, double valor, int score, boolean negativado,
                                     String tipoConta, boolean aprovado, String motivo) {
         try {
             SolicitacaoCredito solicitacao = new SolicitacaoCredito();
-            solicitacao.setDocumento(documento); // 5. Salvando o documento na entidade
+            solicitacao.setDocumento(documento);
             solicitacao.setCliente(cliente);
             solicitacao.setValor(valor);
             solicitacao.setScore(score);
@@ -108,16 +131,6 @@ public class AnaliseCreditoService {
             repository.save(solicitacao);
         } catch (Exception e) {
             log.error("Erro ao persistir resultado da análise para cliente: {}", cliente, e);
-        }
-    }
-
-    private void consultarBureauCredito() {
-        try {
-            log.info("Consultando Bureau de Crédito Externo...");
-            Thread.sleep(2000);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            log.error("Consulta ao bureau de crédito interrompida", e);
         }
     }
 }

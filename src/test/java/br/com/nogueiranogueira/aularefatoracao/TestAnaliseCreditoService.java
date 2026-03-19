@@ -1,7 +1,10 @@
 package br.com.nogueiranogueira.aularefatoracao;
 
+import br.com.nogueiranogueira.aularefatoracao.model.SolicitacaoCredito;
 import br.com.nogueiranogueira.aularefatoracao.repository.SolicitacaoCreditoRepository;
 import br.com.nogueiranogueira.aularefatoracao.service.AnaliseCreditoService;
+import br.com.nogueiranogueira.aularefatoracao.service.ServicoAnaliseRisco;
+import br.com.nogueiranogueira.aularefatoracao.util.ValidadorDocumento;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -10,151 +13,211 @@ import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.Assert.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 
-
-
+/**
+ * Testes unitários de AnaliseCreditoService.
+ *
+ * Todas as dependências são mockadas para isolar o comportamento do serviço.
+ * ValidadorDocumento e ServicoAnaliseRisco retornam sucesso por padrão;
+ * cada teste sobrescreve apenas o que precisa validar.
+ */
 public class TestAnaliseCreditoService {
+
+    // CPF e CNPJ com dígitos verificadores corretos
+    private static final String CPF_VALIDO  = "529.982.247-25";
+    private static final String CNPJ_VALIDO = "11.222.333/0001-81";
+    private static final String DOC_INVALIDO = "000.000.000-00";
 
     private AnaliseCreditoService service;
 
+    private SolicitacaoCreditoRepository repository;
+    private ValidadorDocumento validador;
+    private ServicoAnaliseRisco servicoAnaliseRisco;
+
     @Before
     public void setup() {
-        SolicitacaoCreditoRepository repository = Mockito.mock(SolicitacaoCreditoRepository.class);
-        service = new AnaliseCreditoService(repository);
+        repository          = Mockito.mock(SolicitacaoCreditoRepository.class);
+        validador           = Mockito.mock(ValidadorDocumento.class);
+        servicoAnaliseRisco = Mockito.mock(ServicoAnaliseRisco.class);
+
+        service = new AnaliseCreditoService(repository, validador, servicoAnaliseRisco);
+
+        // Padrão: documento válido e bureau aprova — cada teste altera o que precisar
+        Mockito.when(validador.isDocumentoValido(anyString())).thenReturn(true);
+        Mockito.when(servicoAnaliseRisco.avaliarCredito(any())).thenReturn(true);
     }
 
-    // Testes para casos de reprovação básicos
+    // ──────────────────────────────────────────────────────────────────
+    // Validações de entrada
+    // ──────────────────────────────────────────────────────────────────
 
     @Test
-    public void testAnalisarSolicitacaoValorInvalido() {
-        // Teste: valor inválido (menor ou igual a zero)
-        boolean resultado = service.analisarSolicitacao("João Silva", -1000.0, 600, false, "PF");
-        assertFalse("Solicitação com valor inválido deve ser reprovada", resultado);
+    public void testDocumentoInvalidoDeveReprovar() {
+        Mockito.when(validador.isDocumentoValido(DOC_INVALIDO)).thenReturn(false);
+
+        boolean resultado = service.analisarSolicitacao(DOC_INVALIDO, "João Silva", 3000.0, 700, false, "PF");
+
+        assertFalse("Documento inválido deve ser reprovado", resultado);
     }
 
     @Test
-    public void testAnalisarSolicitacaoClienteNegativado() {
-        // Teste: cliente negativado deve ser reprovado
-        boolean resultado = service.analisarSolicitacao("Maria Santos", 1000.0, 600, true, "PF");
+    public void testValorNegativoDeveReprovar() {
+        boolean resultado = service.analisarSolicitacao(CPF_VALIDO, "João Silva", -1000.0, 700, false, "PF");
+
+        assertFalse("Valor negativo deve ser reprovado", resultado);
+    }
+
+    @Test
+    public void testValorZeroDeveReprovar() {
+        boolean resultado = service.analisarSolicitacao(CPF_VALIDO, "João Silva", 0.0, 700, false, "PF");
+
+        assertFalse("Valor zero deve ser reprovado", resultado);
+    }
+
+    @Test
+    public void testClienteNegativadoDeveReprovar() {
+        boolean resultado = service.analisarSolicitacao(CPF_VALIDO, "Maria Santos", 1000.0, 700, true, "PF");
+
         assertFalse("Cliente negativado deve ser reprovado", resultado);
     }
 
     @Test
-    public void testAnalisarSolicitacaoScoreBaixo() {
-        // Teste: score abaixo de 500 deve ser reprovado
-        boolean resultado = service.analisarSolicitacao("Pedro Costa", 1000.0, 400, false, "PF");
-        assertFalse("Score abaixo de 500 deve resultar em reprovação", resultado);
-    }
+    public void testScoreBaixoDeveReprovar() {
+        boolean resultado = service.analisarSolicitacao(CPF_VALIDO, "Pedro Costa", 1000.0, 400, false, "PF");
 
-    // Testes para Pessoa Física (PF)
-
-    @Test
-    public void testAnalisarSolicitacaoPFValorAltoscoreMedio() {
-        // Teste: PF com valor > 5000 e score < 800 deve ser reprovado
-        boolean resultado = service.analisarSolicitacao("Ana Costa", 6000.0, 700, false, "PF");
-        assertFalse("PF com valor alto e score médio deve ser reprovado", resultado);
+        assertFalse("Score abaixo de 500 deve ser reprovado", resultado);
     }
 
     @Test
-    public void testAnalisarSolicitacaoPFValorBaixoScoreBom() {
-        // Teste: PF com valor baixo e score bom (não é fim de semana)
-        // Nota: Este teste pode falhar em fim de semana. Para melhor confiabilidade,
-        // seria ideal mockar a data/hora.
-        service.analisarSolicitacao("Carlos Silva", 3000.0, 700, false, "PF");
-        // O resultado depende do dia da semana, então apenas verificamos que o método não lança exceção
-        assertTrue("Método deve retornar um valor booleano", true);
+    public void testScoreExatamente500DeveReprovar() {
+        // A regra é score > 500, então 500 exato cai na reprovação
+        boolean resultado = service.analisarSolicitacao(CPF_VALIDO, "Pedro Costa", 1000.0, 500, false, "PF");
+
+        assertFalse("Score exatamente 500 (não maior que) deve ser reprovado", resultado);
     }
 
     @Test
-    public void testAnalisarSolicitacaoPFValorAltoscoreAlto() {
-        // Teste: PF com valor alto mas score alto (> 800)
-        service.analisarSolicitacao("Fernanda Lima", 6000.0, 850, false, "PF");
-        // O resultado depende do dia da semana
-        assertTrue("Método deve retornar um valor booleano", true);
+    public void testTipoContaInvalidoDeveReprovar() {
+        boolean resultado = service.analisarSolicitacao(CPF_VALIDO, "Cliente X", 1000.0, 700, false, "ME");
+
+        assertFalse("Tipo de conta desconhecido deve ser reprovado", resultado);
     }
 
-    // Testes para Pessoa Jurídica (PJ)
+    // ──────────────────────────────────────────────────────────────────
+    // Bureau externo via Adapter
+    // ──────────────────────────────────────────────────────────────────
 
     @Test
-    public void testAnalisarSolicitacaoPJValorAltoScoreBaixo() {
-        // Teste: PJ com valor > 50000 e score < 700 deve ser reprovado
-        boolean resultado = service.analisarSolicitacao("Empresa XYZ LTDA", 60000.0, 650, false, "PJ");
-        assertFalse("PJ com valor alto e score baixo deve ser reprovado", resultado);
+    public void testBureauReprovandoDeveReprovar() {
+        Mockito.when(servicoAnaliseRisco.avaliarCredito(any())).thenReturn(false);
+
+        boolean resultado = service.analisarSolicitacao(CPF_VALIDO, "João Silva", 3000.0, 700, false, "PF");
+
+        assertFalse("Reprovação pelo bureau externo deve reprovar a solicitação", resultado);
     }
 
     @Test
-    public void testAnalisarSolicitacaoPJValorAltoScoreAlto() {
-        // Teste: PJ com valor alto e score alto deve ser aprovado
-        boolean resultado = service.analisarSolicitacao("Tech Solutions LTDA", 60000.0, 750, false, "PJ");
+    public void testBureauNaoEChamadoQuandoDocumentoEInvalido() {
+        Mockito.when(validador.isDocumentoValido(anyString())).thenReturn(false);
+
+        service.analisarSolicitacao(DOC_INVALIDO, "João Silva", 3000.0, 700, false, "PF");
+
+        // Short-circuit: bureau não deve ser consultado se o documento já falhou
+        Mockito.verify(servicoAnaliseRisco, Mockito.never()).avaliarCredito(any());
+    }
+
+    // ──────────────────────────────────────────────────────────────────
+    // Regras Pessoa Física (PF)
+    // ──────────────────────────────────────────────────────────────────
+
+    @Test
+    public void testPFValorAltoScoreMedioDeveReprovar() {
+        // AnaliseStrategyPF: valor > 5000 exige score > 800
+        boolean resultado = service.analisarSolicitacao(CPF_VALIDO, "Ana Costa", 6000.0, 700, false, "PF");
+
+        assertFalse("PF com valor > 5000 e score <= 800 deve ser reprovado", resultado);
+    }
+
+    @Test
+    public void testPFValorBaixoScoreAdequadoNaoLancaExcecao() {
+        // Resultado pode variar por dia da semana (regra de fim de semana na StrategyPF)
+        // Garantimos apenas que não explode
+        try {
+            service.analisarSolicitacao(CPF_VALIDO, "Carlos Silva", 3000.0, 700, false, "PF");
+        } catch (Exception e) {
+            fail("Não deve lançar exceção: " + e.getMessage());
+        }
+    }
+
+    // ──────────────────────────────────────────────────────────────────
+    // Regras Pessoa Jurídica (PJ)
+    // ──────────────────────────────────────────────────────────────────
+
+    @Test
+    public void testPJValorAltoScoreBaixoDeveReprovar() {
+        boolean resultado = service.analisarSolicitacao(CNPJ_VALIDO, "Empresa XYZ LTDA", 60000.0, 650, false, "PJ");
+
+        assertFalse("PJ com valor > 50000 e score < 700 deve ser reprovado", resultado);
+    }
+
+    @Test
+    public void testPJValorAltoScoreAltoDeveAprovar() {
+        boolean resultado = service.analisarSolicitacao(CNPJ_VALIDO, "Tech Solutions LTDA", 60000.0, 750, false, "PJ");
+
         assertTrue("PJ com valor alto e score alto deve ser aprovado", resultado);
     }
 
     @Test
-    public void testAnalisarSolicitacaoPJValorBaixo() {
-        // Teste: PJ com valor baixo deve ser aprovado (se outros critérios forem atendidos)
-        boolean resultado = service.analisarSolicitacao("Pequena Empresa LTDA", 30000.0, 650, false, "PJ");
-        assertTrue("PJ com valor baixo e score acima de 500 deve ser aprovado", resultado);
+    public void testPJValorBaixoScoreAdequadoDeveAprovar() {
+        boolean resultado = service.analisarSolicitacao(CNPJ_VALIDO, "Pequena Empresa LTDA", 30000.0, 650, false, "PJ");
+
+        assertTrue("PJ com valor baixo e score > 500 deve ser aprovado", resultado);
     }
 
-    // Testes para tipo de conta inválido
+    // ──────────────────────────────────────────────────────────────────
+    // processarLote
+    // ──────────────────────────────────────────────────────────────────
 
     @Test
-    public void testAnalisarSolicitacaoTipoContaInvalido() {
-        // Teste: tipo de conta desconhecido deve ser reprovado
-        boolean resultado = service.analisarSolicitacao("Cliente X", 1000.0, 600, false, "INVALIDO");
-        assertFalse("Tipo de conta desconhecido deve ser reprovado", resultado);
-    }
-
-    // Testes para o método processarLote
-
-    @Test
-    public void testProcessarLoteVazio() {
-        // Teste: processar lote vazio não deve lançar exceção
-        List<String> clientes = new java.util.ArrayList<>();
+    public void testProcessarLoteVazioNaoLancaExcecao() {
         try {
-            service.processarLote(clientes);
+            service.processarLote(List.of());
         } catch (Exception e) {
             fail("Não deve lançar exceção ao processar lote vazio: " + e.getMessage());
         }
     }
 
     @Test
-    public void testProcessarLoteComUmCliente() {
-        // Teste: processar lote com um cliente não deve lançar exceção
-        List<String> clientes = Arrays.asList("Cliente 1", "Cliente 2");
+    public void testProcessarLoteComMultiplosItens() {
+        List<SolicitacaoCredito> lote = Arrays.asList(
+                buildSolicitacao(CNPJ_VALIDO, "Empresa A",  25000.0, 750, false, "PJ"),
+                buildSolicitacao(CPF_VALIDO,  "Pessoa B",    3000.0, 700, false, "PF"),
+                buildSolicitacao(CPF_VALIDO,  "Pessoa C",    1000.0, 300, false, "PF")  // score baixo
+        );
+
         try {
-            service.processarLote(clientes);
+            service.processarLote(lote);
         } catch (Exception e) {
-            fail("Não deve lançar exceção ao processar lote com um cliente: " + e.getMessage());
+            fail("Não deve lançar exceção ao processar lote: " + e.getMessage());
         }
     }
 
-    @Test
-    public void testProcessarLoteComVariosClientes() {
-        // Teste: processar lote com vários clientes não deve lançar exceção
-        List<String> clientes = Arrays.asList("Cliente 1", "Cliente 2", "Cliente 3", "Cliente 4", "Cliente 5");
-        try {
-            service.processarLote(clientes);
-        } catch (Exception e) {
-            fail("Não deve lançar exceção ao processar lote com vários clientes: " + e.getMessage());
-        }
-    }
+    // ──────────────────────────────────────────────────────────────────
+    // Helper
+    // ──────────────────────────────────────────────────────────────────
 
-    // Teste de integração
-    @Test
-    public void testFluxoCompletoAprovacaoPF() {
-        // Teste: fluxo completo de aprovação para PF com parâmetros válidos
-        service.analisarSolicitacao("João Silva", 2000.0, 650, false, "PF");
-        // O resultado depende do dia da semana, então apenas verificamos que não há exceção
-        assertTrue("Método deve processar solicitação sem erros", true);
-    }
-
-    @Test
-    public void testFluxoCompletoAprovacaoPJ() {
-        // Teste: fluxo completo de aprovação para PJ com parâmetros válidos
-        boolean resultado = service.analisarSolicitacao("Empresa ABC", 25000.0, 750, false, "PJ");
-        assertTrue("PJ com parâmetros válidos deve ser aprovado", resultado);
+    private SolicitacaoCredito buildSolicitacao(String documento, String cliente,
+                                                double valor, int score,
+                                                boolean negativado, String tipoConta) {
+        SolicitacaoCredito s = new SolicitacaoCredito();
+        s.setDocumento(documento);
+        s.setCliente(cliente);
+        s.setValor(valor);
+        s.setScore(score);
+        s.setNegativado(negativado);
+        s.setTipoConta(tipoConta);
+        return s;
     }
 }
-
-

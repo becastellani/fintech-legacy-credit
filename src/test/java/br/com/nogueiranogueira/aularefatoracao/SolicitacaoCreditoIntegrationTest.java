@@ -3,15 +3,15 @@ package br.com.nogueiranogueira.aularefatoracao;
 import br.com.nogueiranogueira.aularefatoracao.model.SolicitacaoCredito;
 import br.com.nogueiranogueira.aularefatoracao.repository.SolicitacaoCreditoRepository;
 import br.com.nogueiranogueira.aularefatoracao.service.AnaliseCreditoService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-import org.springframework.web.context.WebApplicationContext;
 
-import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -19,11 +19,13 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest
+@AutoConfigureMockMvc
 public class SolicitacaoCreditoIntegrationTest {
 
-    @Autowired
-    private WebApplicationContext webApplicationContext;
+    private static final String CPF_VALIDO  = "529.982.247-25";
+    private static final String CNPJ_VALIDO = "11.222.333/0001-81";
 
+    @Autowired
     private MockMvc mockMvc;
 
     @Autowired
@@ -32,17 +34,18 @@ public class SolicitacaoCreditoIntegrationTest {
     @Autowired
     private SolicitacaoCreditoRepository repository;
 
+    @Autowired
+    private ObjectMapper objectMapper;
+
     @BeforeEach
     public void setUp() {
-        mockMvc = MockMvcBuilders
-                .webAppContextSetup(webApplicationContext)
-                .build();
         repository.deleteAll();
     }
 
     @Test
     public void testAnalisarSolicitacaoAprovadaPF() throws Exception {
         mockMvc.perform(post("/api/solicitacoes/analisar")
+                .param("documento", CPF_VALIDO)
                 .param("cliente", "João Silva")
                 .param("valor", "3000")
                 .param("score", "700")
@@ -56,6 +59,7 @@ public class SolicitacaoCreditoIntegrationTest {
     @Test
     public void testAnalisarSolicitacaoReprovadaValorInvalido() throws Exception {
         mockMvc.perform(post("/api/solicitacoes/analisar")
+                .param("documento", CPF_VALIDO)
                 .param("cliente", "Maria Santos")
                 .param("valor", "-1000")
                 .param("score", "700")
@@ -68,6 +72,7 @@ public class SolicitacaoCreditoIntegrationTest {
     @Test
     public void testAnalisarSolicitacaoClienteNegativado() throws Exception {
         mockMvc.perform(post("/api/solicitacoes/analisar")
+                .param("documento", CPF_VALIDO)
                 .param("cliente", "Pedro Costa")
                 .param("valor", "5000")
                 .param("score", "700")
@@ -78,20 +83,21 @@ public class SolicitacaoCreditoIntegrationTest {
     }
 
     @Test
-    public void testProcessarLote() throws Exception {
+    public void testProcessarLoteViaHTTP() throws Exception {
+        SolicitacaoCredito s1 = buildSolicitacao(CNPJ_VALIDO, "Empresa A", 25000.0, 750, false, "PJ");
+        SolicitacaoCredito s2 = buildSolicitacao(CPF_VALIDO,  "Pessoa B",   3000.0, 700, false, "PF");
 
         mockMvc.perform(post("/api/solicitacoes/processar-lote")
-                .contentType("application/json")
-                .content("[\"Cliente1\", \"Cliente2\", \"Cliente3\"]"))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(List.of(s1, s2))))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.mensagem").value("Lote processado com sucesso"))
-                .andExpect(jsonPath("$.totalClientes").value("3"));
+                .andExpect(jsonPath("$.totalSolicitacoes").value("2"));
     }
 
     @Test
     public void testObterSolicitacoesAprovadas() throws Exception {
-        // Criar algumas solicitações
-        analiseCreditoService.analisarSolicitacao("Cliente Aprovado", 2000, 700, false, "PF");
+        analiseCreditoService.analisarSolicitacao(CPF_VALIDO, "Cliente Aprovado", 2000, 700, false, "PF");
 
         mockMvc.perform(get("/api/solicitacoes/aprovadas"))
                 .andExpect(status().isOk());
@@ -99,8 +105,7 @@ public class SolicitacaoCreditoIntegrationTest {
 
     @Test
     public void testObterSolicitacoesPorCliente() throws Exception {
-        // Criar solicitação
-        analiseCreditoService.analisarSolicitacao("João", 2000, 700, false, "PF");
+        analiseCreditoService.analisarSolicitacao(CPF_VALIDO, "João", 2000, 700, false, "PF");
 
         mockMvc.perform(get("/api/solicitacoes/por-cliente/João"))
                 .andExpect(status().isOk());
@@ -116,7 +121,9 @@ public class SolicitacaoCreditoIntegrationTest {
 
     @Test
     public void testAnalisarSolicitacaoAprovadaPJComParametrosValidos() {
-        boolean resultado = analiseCreditoService.analisarSolicitacao("Empresa ABC LTDA", 25000, 750, false, "PJ");
+        boolean resultado = analiseCreditoService.analisarSolicitacao(
+                CNPJ_VALIDO, "Empresa ABC LTDA", 25000, 750, false, "PJ");
+
         assertTrue(resultado, "PJ com valor adequado e score alto deve ser aprovado");
 
         List<SolicitacaoCredito> solicitacoes = repository.findByCliente("Empresa ABC LTDA");
@@ -126,7 +133,9 @@ public class SolicitacaoCreditoIntegrationTest {
 
     @Test
     public void testAnalisarSolicitacaoReprovadaPJComRisco() {
-        boolean resultado = analiseCreditoService.analisarSolicitacao("Empresa XYZ LTDA", 60000, 650, false, "PJ");
+        boolean resultado = analiseCreditoService.analisarSolicitacao(
+                CNPJ_VALIDO, "Empresa XYZ LTDA", 60000, 650, false, "PJ");
+
         assertFalse(resultado, "PJ com valor alto e score baixo deve ser reprovado");
 
         List<SolicitacaoCredito> solicitacoes = repository.findByCliente("Empresa XYZ LTDA");
@@ -137,22 +146,30 @@ public class SolicitacaoCreditoIntegrationTest {
 
     @Test
     public void testProcessarLoteComMultiplosClientes() {
-        List<String> clientes = Arrays.asList("Cliente1", "Cliente2", "Cliente3");
-        analiseCreditoService.processarLote(clientes);
+        List<SolicitacaoCredito> lote = List.of(
+                buildSolicitacao(CNPJ_VALIDO, "Empresa 1", 25000.0, 750, false, "PJ"),
+                buildSolicitacao(CPF_VALIDO,  "Pessoa 2",   3000.0, 700, false, "PF"),
+                buildSolicitacao(CPF_VALIDO,  "Pessoa 3",   1000.0, 300, false, "PF")
+        );
+        analiseCreditoService.processarLote(lote);
 
-        assertEquals(3, repository.count(), "Deve haver 3 solicitações após processar lote");
+        assertEquals(3, repository.count(), "Deve haver 3 registros após processar lote");
     }
 
-//    @Test
-//    public void testObterSolicitacoesAprovadosPortipo() {
-//        analiseCreditoService.analisarSolicitacao("Cliente PF 1", 2000, 700, false, "PF");
-//        analiseCreditoService.analisarSolicitacao("Cliente PF 2", 3000, 750, false, "PF");
-//        analiseCreditoService.analisarSolicitacao("Cliente PJ 1", 25000, 750, false, "PJ");
-//
-//        Long totalPF = analiseCreditoService.obterTotalAprovadosPorTipo("PF");
-//        Long totalPJ = analiseCreditoService.obterTotalAprovadosPorTipo("PJ");
-//
-//        assertEquals(2, totalPF, "Deve haver 2 solicitações aprovadas para PF");
-//        assertEquals(1, totalPJ, "Deve haver 1 solicitação aprovada para PJ");
-//    }
+    // ──────────────────────────────────────────────────────────────────
+    // Helper
+    // ──────────────────────────────────────────────────────────────────
+
+    private SolicitacaoCredito buildSolicitacao(String documento, String cliente,
+                                                double valor, int score,
+                                                boolean negativado, String tipoConta) {
+        SolicitacaoCredito s = new SolicitacaoCredito();
+        s.setDocumento(documento);
+        s.setCliente(cliente);
+        s.setValor(valor);
+        s.setScore(score);
+        s.setNegativado(negativado);
+        s.setTipoConta(tipoConta);
+        return s;
+    }
 }
