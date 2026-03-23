@@ -9,20 +9,23 @@ public class CnpjValidadorStrategy implements ValidadorDocumentoStrategy {
 
     private boolean isCnpjValido(String cnpj) {
         // Rejeita sequências triviais como "00.000.000/0000-00"
-        if (cnpj.matches("(\\d)\\1{13}")) return false;
+        if (cnpj.matches("(\\d)\\1{13}"))
+            return false;
 
         int primeiroDigito = calcularDigitoCnpj(cnpj, 12);
-        if (primeiroDigito != Character.getNumericValue(cnpj.charAt(12))) return false;
+        if (primeiroDigito != Character.getNumericValue(cnpj.charAt(12)))
+            return false;
 
         int segundoDigito = calcularDigitoCnpj(cnpj, 13);
         return segundoDigito == Character.getNumericValue(cnpj.charAt(13));
     }
+
     /**
      * Calcula um dígito verificador de CNPJ.
      *
      * Os pesos ciclam de 2 a 9 da direita para a esquerda:
-     *   12 primeiros dígitos → pesos [5,4,3,2,9,8,7,6,5,4,3,2]
-     *   13 primeiros dígitos → pesos [6,5,4,3,2,9,8,7,6,5,4,3,2]
+     * 12 primeiros dígitos → pesos [5,4,3,2,9,8,7,6,5,4,3,2]
+     * 13 primeiros dígitos → pesos [6,5,4,3,2,9,8,7,6,5,4,3,2]
      *
      * @param cnpj   string de 14 dígitos
      * @param length quantos dígitos usar no cálculo (12 ou 13)

@@ -1,6 +1,6 @@
 package br.com.nogueiranogueira.aularefatoracao.strategy.documento;
 
-public class CpfValidadorStrategy implements ValidadorDocumentoStrategy{
+public class CpfValidadorStrategy implements ValidadorDocumentoStrategy {
 
     @Override
     public boolean validar(String documento) {
@@ -9,10 +9,12 @@ public class CpfValidadorStrategy implements ValidadorDocumentoStrategy{
 
     private boolean isCpfValido(String cpf) {
         // Rejeita sequências triviais como "111.111.111-11"
-        if (cpf.matches("(\\d)\\1{10}")) return false;
+        if (cpf.matches("(\\d)\\1{10}"))
+            return false;
 
         int primeiroDigito = calcularDigitoCpf(cpf, 9);
-        if (primeiroDigito != Character.getNumericValue(cpf.charAt(9))) return false;
+        if (primeiroDigito != Character.getNumericValue(cpf.charAt(9)))
+            return false;
 
         int segundoDigito = calcularDigitoCpf(cpf, 10);
         return segundoDigito == Character.getNumericValue(cpf.charAt(10));
