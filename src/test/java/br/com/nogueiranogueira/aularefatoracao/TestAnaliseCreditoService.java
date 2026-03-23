@@ -4,7 +4,6 @@ import br.com.nogueiranogueira.aularefatoracao.model.SolicitacaoCredito;
 import br.com.nogueiranogueira.aularefatoracao.repository.SolicitacaoCreditoRepository;
 import br.com.nogueiranogueira.aularefatoracao.service.AnaliseCreditoService;
 import br.com.nogueiranogueira.aularefatoracao.service.ServicoAnaliseRisco;
-import br.com.nogueiranogueira.aularefatoracao.util.ValidadorDocumento;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -33,19 +32,16 @@ public class TestAnaliseCreditoService {
     private AnaliseCreditoService service;
 
     private SolicitacaoCreditoRepository repository;
-    private ValidadorDocumento validador;
     private ServicoAnaliseRisco servicoAnaliseRisco;
 
     @Before
     public void setup() {
         repository          = Mockito.mock(SolicitacaoCreditoRepository.class);
-        validador           = Mockito.mock(ValidadorDocumento.class);
         servicoAnaliseRisco = Mockito.mock(ServicoAnaliseRisco.class);
 
-        service = new AnaliseCreditoService(repository, validador, servicoAnaliseRisco);
+        service = new AnaliseCreditoService(repository, servicoAnaliseRisco);
 
         // Padrão: documento válido e bureau aprova — cada teste altera o que precisar
-        Mockito.when(validador.isDocumentoValido(anyString())).thenReturn(true);
         Mockito.when(servicoAnaliseRisco.avaliarCredito(any())).thenReturn(true);
     }
 
@@ -55,7 +51,6 @@ public class TestAnaliseCreditoService {
 
     @Test
     public void testDocumentoInvalidoDeveReprovar() {
-        Mockito.when(validador.isDocumentoValido(DOC_INVALIDO)).thenReturn(false);
 
         boolean resultado = service.analisarSolicitacao(DOC_INVALIDO, "João Silva", 3000.0, 700, false, "PF");
 
@@ -120,7 +115,6 @@ public class TestAnaliseCreditoService {
 
     @Test
     public void testBureauNaoEChamadoQuandoDocumentoEInvalido() {
-        Mockito.when(validador.isDocumentoValido(anyString())).thenReturn(false);
 
         service.analisarSolicitacao(DOC_INVALIDO, "João Silva", 3000.0, 700, false, "PF");
 
