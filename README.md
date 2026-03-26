@@ -259,20 +259,30 @@ Este projeto é parte de um exercício de refatoração de código legado.
 ## 👨‍💻 Autor
 Bernardo Castellani, Cesar Pisa, Mario Wilhelms, Matheus Morilla, Mayumi Bogoni
 
-## Análise Técnica e Dívidas Técnicas
+## 🧩 Exercício 1 - Atividade 1: Criar a Linha de Produto de Software de Crédito
 
-**AnaliseCreditoService.java:**
-- Método `analisarSolicitacao()` com complexidade ciclomática alta - 7 níveis
-- Aninhamento profundo de estruturas condicionais (if dentro de if dentro de if)
-- Uso de `Date` depreciado (`new Date().getDay()`)
-- Falta de separação de responsabilidades
-- Hardcoded valores de regras de negócio (5000, 800, 50000, 700, etc.)
-- Ausência de validação de entrada
-- Lógica duplicada entre PF e PJ
+### Core Assets
 
-**ProcessadorVendaService.java:**
-- Verificar existência e implementação desta classe
-- Regras que podem ser separadas
-- Método `analisarSolicitacao()` com complexidade ciclomática alta - 7 níveis
-- Separar em enums para tipos de conta
-- Separar as 'palavras soltas' como imposto, valor, frete...
+- **Log de Auditoria**  
+  Presente em qualquer sistema de crédito para registrar decisões, eventos e histórico de processamento.  
+  **Justificativa:** é considerado core porque todo produto da linha precisa garantir rastreabilidade, auditoria e histórico das análises realizadas.
+
+- **Identificação**  
+  Elemento central do domínio, responsável por representar e validar o solicitante.  
+  **Justificativa:** é considerado core porque faz parte da estrutura principal do sistema de crédito, estando diretamente relacionado ao tipo de pessoa, física ou jurídica. Caso seja necessário adicionar novos tipos de documento, o núcleo da aplicação também precisará ser alterado.
+
+- **Cálculo do Score**  
+  Parte essencial do processo de análise de risco e concessão de crédito.  
+  **Justificativa:** é considerado core porque toda aplicação da linha de produtos precisa avaliar risco para decidir pela aprovação ou reprovação da solicitação.
+
+### Pontos de Variância
+
+- **Motor de Persistência**  
+  Pode variar conforme a tecnologia adotada pela aplicação.  
+  **Justificativa:** é considerado ponto de variância porque a necessidade de persistir dados permanece a mesma, mas a tecnologia utilizada pode ser configurada conforme o ambiente ou necessidade do cliente.
+
+  **Variantes possíveis:**  
+  - H2  
+  - PostgreSQL  
+  - MySQL  
+  - MongoDB
