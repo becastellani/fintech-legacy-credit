@@ -1,33 +1,40 @@
 package br.com.nogueiranogueira.aularefatoracao.service;
 
 import br.com.nogueiranogueira.aularefatoracao.factory.AnaliseCreditoFactory;
+import br.com.nogueiranogueira.aularefatoracao.factory.ValidadorDocumentoFactory;
 import br.com.nogueiranogueira.aularefatoracao.model.SolicitacaoCredito;
 import br.com.nogueiranogueira.aularefatoracao.model.TipoConta;
 import br.com.nogueiranogueira.aularefatoracao.repository.SolicitacaoCreditoRepository;
 import br.com.nogueiranogueira.aularefatoracao.strategy.AnaliseStrategy;
-import br.com.nogueiranogueira.aularefatoracao.util.ValidadorDocumento;
-import lombok.RequiredArgsConstructor;
+
+import br.com.nogueiranogueira.aularefatoracao.strategy.documento.ValidadorDocumentoStrategy;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class AnaliseCreditoService {
 
     private static final int SCORE_MINIMO = 500;
 
     private final SolicitacaoCreditoRepository repository;
-    private final ValidadorDocumento validador;
     private final ServicoAnaliseRisco servicoAnaliseRisco;
+
+    public AnaliseCreditoService(
+            SolicitacaoCreditoRepository repository,
+            @Qualifier("serasa") ServicoAnaliseRisco servicoAnaliseRisco){
+        this.repository = repository;
+        this.servicoAnaliseRisco = servicoAnaliseRisco;
+    }
 
     public boolean analisarSolicitacao(String documento, String cliente, double valor, int score,
                                        boolean negativado, String tipoConta) {
         log.info("Iniciando análise para: {}", cliente);
-
-        if (!validador.isDocumentoValido(documento)) {
+        ValidadorDocumentoStrategy validador = ValidadorDocumentoFactory.obter(documento);
+        if (!validador.validar(documento)) {
             log.warn("Documento inválido: {}", documento);
             persistirResultado(documento, cliente, valor, score, negativado, tipoConta, false, "Documento inválido");
             return false;

@@ -4,10 +4,14 @@ import br.com.nogueiranogueira.aularefatoracao.model.SolicitacaoCredito;
 import br.com.nogueiranogueira.aularefatoracao.repository.SolicitacaoCreditoRepository;
 import br.com.nogueiranogueira.aularefatoracao.service.AnaliseCreditoService;
 import br.com.nogueiranogueira.aularefatoracao.service.ServicoAnaliseRisco;
-import br.com.nogueiranogueira.aularefatoracao.util.ValidadorDocumento;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.MockedStatic;
 import org.mockito.Mockito;
+import br.com.nogueiranogueira.aularefatoracao.model.constantes.DiaSemana;
+import br.com.nogueiranogueira.aularefatoracao.factory.ValidadorDocumentoFactory;
+import br.com.nogueiranogueira.aularefatoracao.strategy.documento.ValidadorDocumentoStrategy;
 
 import java.util.Arrays;
 import java.util.List;
@@ -33,20 +37,36 @@ public class TestAnaliseCreditoService {
     private AnaliseCreditoService service;
 
     private SolicitacaoCreditoRepository repository;
-    private ValidadorDocumento validador;
     private ServicoAnaliseRisco servicoAnaliseRisco;
+    private MockedStatic<DiaSemana> mockDiaSemana;
+    private MockedStatic<ValidadorDocumentoFactory> mockValidadorFactory;
 
     @Before
     public void setup() {
         repository          = Mockito.mock(SolicitacaoCreditoRepository.class);
-        validador           = Mockito.mock(ValidadorDocumento.class);
         servicoAnaliseRisco = Mockito.mock(ServicoAnaliseRisco.class);
 
-        service = new AnaliseCreditoService(repository, validador, servicoAnaliseRisco);
+        service = new AnaliseCreditoService(repository, servicoAnaliseRisco);
 
         // Padrão: documento válido e bureau aprova — cada teste altera o que precisar
-        Mockito.when(validador.isDocumentoValido(anyString())).thenReturn(true);
         Mockito.when(servicoAnaliseRisco.avaliarCredito(any())).thenReturn(true);
+        
+        mockDiaSemana = Mockito.mockStatic(DiaSemana.class);
+        mockDiaSemana.when(DiaSemana::isFinaldeSemana).thenReturn(false);
+
+        ValidadorDocumentoStrategy dummyValid = doc -> true;
+        mockValidadorFactory = Mockito.mockStatic(ValidadorDocumentoFactory.class);
+        mockValidadorFactory.when(() -> ValidadorDocumentoFactory.obter(anyString())).thenReturn(dummyValid);
+    }
+
+    @After
+    public void tearDown() {
+        if (mockDiaSemana != null) {
+            mockDiaSemana.close();
+        }
+        if (mockValidadorFactory != null) {
+            mockValidadorFactory.close();
+        }
     }
 
     // ──────────────────────────────────────────────────────────────────
@@ -55,7 +75,8 @@ public class TestAnaliseCreditoService {
 
     @Test
     public void testDocumentoInvalidoDeveReprovar() {
-        Mockito.when(validador.isDocumentoValido(DOC_INVALIDO)).thenReturn(false);
+        ValidadorDocumentoStrategy dummyInvalid = doc -> false;
+        mockValidadorFactory.when(() -> ValidadorDocumentoFactory.obter(DOC_INVALIDO)).thenReturn(dummyInvalid);
 
         boolean resultado = service.analisarSolicitacao(DOC_INVALIDO, "João Silva", 3000.0, 700, false, "PF");
 
@@ -120,7 +141,8 @@ public class TestAnaliseCreditoService {
 
     @Test
     public void testBureauNaoEChamadoQuandoDocumentoEInvalido() {
-        Mockito.when(validador.isDocumentoValido(anyString())).thenReturn(false);
+        ValidadorDocumentoStrategy dummyInvalid = doc -> false;
+        mockValidadorFactory.when(() -> ValidadorDocumentoFactory.obter(DOC_INVALIDO)).thenReturn(dummyInvalid);
 
         service.analisarSolicitacao(DOC_INVALIDO, "João Silva", 3000.0, 700, false, "PF");
 

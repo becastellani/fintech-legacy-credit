@@ -5,12 +5,17 @@ import br.com.nogueiranogueira.aularefatoracao.repository.SolicitacaoCreditoRepo
 import br.com.nogueiranogueira.aularefatoracao.service.AnaliseCreditoService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
+import br.com.nogueiranogueira.aularefatoracao.model.constantes.DiaSemana;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.web.context.WebApplicationContext;
 
 import java.util.List;
 
@@ -19,13 +24,14 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest
-@AutoConfigureMockMvc
 public class SolicitacaoCreditoIntegrationTest {
 
     private static final String CPF_VALIDO  = "529.982.247-25";
     private static final String CNPJ_VALIDO = "11.222.333/0001-81";
 
     @Autowired
+    private WebApplicationContext context;
+
     private MockMvc mockMvc;
 
     @Autowired
@@ -34,12 +40,23 @@ public class SolicitacaoCreditoIntegrationTest {
     @Autowired
     private SolicitacaoCreditoRepository repository;
 
-    @Autowired
-    private ObjectMapper objectMapper;
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
+    private MockedStatic<DiaSemana> mockDiaSemana;
 
     @BeforeEach
     public void setUp() {
+        mockMvc = MockMvcBuilders.webAppContextSetup(context).build();
         repository.deleteAll();
+        mockDiaSemana = Mockito.mockStatic(DiaSemana.class);
+        mockDiaSemana.when(DiaSemana::isFinaldeSemana).thenReturn(false);
+    }
+
+    @AfterEach
+    public void tearDown() {
+        if (mockDiaSemana != null) {
+            mockDiaSemana.close();
+        }
     }
 
     @Test
