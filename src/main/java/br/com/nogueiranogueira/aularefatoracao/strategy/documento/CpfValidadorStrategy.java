@@ -4,11 +4,13 @@ public class CpfValidadorStrategy implements ValidadorDocumentoStrategy {
 
     @Override
     public boolean validar(String documento) {
-        return isCpfValido(documento);
-    };
+        if (documento == null || documento.isBlank()) return false;
+        return isCpfValido(documento.replaceAll("[^0-9]", ""));
+    }
 
     private boolean isCpfValido(String cpf) {
-        // Rejeita sequências triviais como "111.111.111-11"
+        if (cpf.length() != 11) return false;
+        // Rejeita sequências triviais como "11111111111"
         if (cpf.matches("(\\d)\\1{10}"))
             return false;
 

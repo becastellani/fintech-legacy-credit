@@ -28,19 +28,21 @@ public class SolicitacaoCreditoController {
             @RequestParam Double valor,
             @RequestParam Integer score,
             @RequestParam(defaultValue = "false") Boolean negativado,
-            @RequestParam(defaultValue = "PF") String tipoConta) {
+            @RequestParam(defaultValue = "PF") String tipoConta,
+            @RequestParam(defaultValue = "BR") String pais) {
 
-        log.info("Recebida requisição de análise para cliente: {} com documento: {}", cliente, documento);
+        log.info("Recebida requisição de análise para cliente: {} com documento: {} [país={}]", cliente, documento, pais);
 
         try {
 
-            boolean aprovado = analiseCreditoService.analisarSolicitacao(documento, cliente, valor, score, negativado, tipoConta);
+            boolean aprovado = analiseCreditoService.analisarSolicitacao(documento, cliente, valor, score, negativado, tipoConta, pais);
 
             Map<String, Object> response = new HashMap<>();
             response.put("documento", documento);
             response.put("cliente", cliente);
             response.put("valor", valor);
             response.put("score", score);
+            response.put("pais", pais);
             response.put("aprovado", aprovado);
             response.put("mensagem", aprovado ? "Solicitação aprovada" : "Solicitação reprovada");
 

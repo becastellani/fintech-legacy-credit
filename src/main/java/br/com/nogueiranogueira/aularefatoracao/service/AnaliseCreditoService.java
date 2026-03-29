@@ -1,13 +1,14 @@
 package br.com.nogueiranogueira.aularefatoracao.service;
 
 import br.com.nogueiranogueira.aularefatoracao.factory.AnaliseCreditoFactory;
+import br.com.nogueiranogueira.aularefatoracao.factory.AnalisePaisStrategyFactory;
 import br.com.nogueiranogueira.aularefatoracao.factory.ValidadorDocumentoFactory;
 import br.com.nogueiranogueira.aularefatoracao.model.SolicitacaoCredito;
 import br.com.nogueiranogueira.aularefatoracao.model.TipoConta;
 import br.com.nogueiranogueira.aularefatoracao.repository.SolicitacaoCreditoRepository;
 import br.com.nogueiranogueira.aularefatoracao.strategy.AnaliseStrategy;
+import br.com.nogueiranogueira.aularefatoracao.strategy.analisePais.AnalisePaisStrategy;
 
-import br.com.nogueiranogueira.aularefatoracao.strategy.documento.ValidadorDocumentoStrategy;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
@@ -30,11 +31,32 @@ public class AnaliseCreditoService {
         this.servicoAnaliseRisco = servicoAnaliseRisco;
     }
 
+    /**
+     * Overload backward-compatible — assume país Brasil quando não informado.
+     * Mantém a assinatura original para não quebrar testes e chamadas existentes.
+     */
     public boolean analisarSolicitacao(String documento, String cliente, double valor, int score,
                                        boolean negativado, String tipoConta) {
-        log.info("Iniciando análise para: {}", cliente);
-        ValidadorDocumentoStrategy validador = ValidadorDocumentoFactory.obter(documento);
-        if (!validador.validar(documento)) {
+        return analisarSolicitacao(documento, cliente, valor, score, negativado, tipoConta, "BR");
+    }
+
+    /**
+     * LPS — ponto de variação "AnalisePaisStrategy" ativado via parâmetro {@code pais}.
+     *
+     * Fluxo:
+     *   1. Validação do documento (variante por tipo)
+     *   2. Regras básicas: valor, negativado, score mínimo global
+     *   3. Regras de score por país (LPS variante país)
+     *   4. Bureau de crédito externo (Adapter)
+     *   5. Regras internas por tipo de conta (Strategy)
+     */
+    public boolean analisarSolicitacao(String documento, String cliente, double valor, int score,
+                                       boolean negativado, String tipoConta, String pais) {
+        log.info("Iniciando análise para: {} [país={}]", cliente, pais);
+        boolean documentoValido = ValidadorDocumentoFactory.obter(documento, pais)
+                .map(v -> v.validar(documento))
+                .orElse(false);
+        if (!documentoValido) {
             log.warn("Documento inválido: {}", documento);
             persistirResultado(documento, cliente, valor, score, negativado, tipoConta, false, "Documento inválido");
             return false;
@@ -58,6 +80,25 @@ public class AnaliseCreditoService {
             return false;
         }
 
+        // LPS — Variante país: regras de score mínimo específicas por mercado
+        try {
+            AnalisePaisStrategy analisePais = AnalisePaisStrategyFactory.criar(pais);
+            SolicitacaoCredito dtoScore = new SolicitacaoCredito();
+            dtoScore.setDocumento(documento);
+            dtoScore.setScore(score);
+            dtoScore.setValor(valor);
+            if (!analisePais.aprovar(dtoScore)) {
+                log.warn("Score insuficiente para o país {}: {}", pais, score);
+                persistirResultado(documento, cliente, valor, score, negativado, tipoConta, false,
+                        "Score insuficiente para o país " + pais);
+                return false;
+            }
+        } catch (IllegalArgumentException e) {
+            log.warn("País não suportado: {}", pais);
+            persistirResultado(documento, cliente, valor, score, negativado, tipoConta, false, "País não suportado: " + pais);
+            return false;
+        }
+
         TipoConta tipo;
         try {
             tipo = TipoConta.fromString(tipoConta);
@@ -76,7 +117,7 @@ public class AnaliseCreditoService {
             return false;
         }
 
-        // Regras internas de negócio via Strategy
+        // Regras internas de negócio via Strategy (TipoConta)
         AnaliseStrategy strategy = AnaliseCreditoFactory.obterEstrategia(tipo);
         boolean aprovado = strategy.analisar(valor, score);
 

@@ -15,6 +15,7 @@ import br.com.nogueiranogueira.aularefatoracao.strategy.documento.ValidadorDocum
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -56,7 +57,8 @@ public class TestAnaliseCreditoService {
 
         ValidadorDocumentoStrategy dummyValid = doc -> true;
         mockValidadorFactory = Mockito.mockStatic(ValidadorDocumentoFactory.class);
-        mockValidadorFactory.when(() -> ValidadorDocumentoFactory.obter(anyString())).thenReturn(dummyValid);
+        mockValidadorFactory.when(() -> ValidadorDocumentoFactory.obter(anyString()))
+                .thenReturn(Optional.of(dummyValid));
     }
 
     @After
@@ -76,7 +78,8 @@ public class TestAnaliseCreditoService {
     @Test
     public void testDocumentoInvalidoDeveReprovar() {
         ValidadorDocumentoStrategy dummyInvalid = doc -> false;
-        mockValidadorFactory.when(() -> ValidadorDocumentoFactory.obter(DOC_INVALIDO)).thenReturn(dummyInvalid);
+        mockValidadorFactory.when(() -> ValidadorDocumentoFactory.obter(DOC_INVALIDO))
+                .thenReturn(Optional.of(dummyInvalid));
 
         boolean resultado = service.analisarSolicitacao(DOC_INVALIDO, "João Silva", 3000.0, 700, false, "PF");
 
@@ -142,7 +145,8 @@ public class TestAnaliseCreditoService {
     @Test
     public void testBureauNaoEChamadoQuandoDocumentoEInvalido() {
         ValidadorDocumentoStrategy dummyInvalid = doc -> false;
-        mockValidadorFactory.when(() -> ValidadorDocumentoFactory.obter(DOC_INVALIDO)).thenReturn(dummyInvalid);
+        mockValidadorFactory.when(() -> ValidadorDocumentoFactory.obter(DOC_INVALIDO))
+                .thenReturn(Optional.of(dummyInvalid));
 
         service.analisarSolicitacao(DOC_INVALIDO, "João Silva", 3000.0, 700, false, "PF");
 

@@ -4,11 +4,13 @@ public class CnpjValidadorStrategy implements ValidadorDocumentoStrategy {
 
     @Override
     public boolean validar(String documento) {
-        return isCnpjValido(documento);
-    };
+        if (documento == null || documento.isBlank()) return false;
+        return isCnpjValido(documento.replaceAll("[^0-9]", ""));
+    }
 
     private boolean isCnpjValido(String cnpj) {
-        // Rejeita sequências triviais como "00.000.000/0000-00"
+        if (cnpj.length() != 14) return false;
+        // Rejeita sequências triviais como "00000000000000"
         if (cnpj.matches("(\\d)\\1{13}"))
             return false;
 

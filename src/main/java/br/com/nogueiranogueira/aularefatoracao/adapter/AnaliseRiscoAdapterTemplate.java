@@ -3,16 +3,17 @@ package br.com.nogueiranogueira.aularefatoracao.adapter;
 import br.com.nogueiranogueira.aularefatoracao.factory.ValidadorDocumentoFactory;
 import br.com.nogueiranogueira.aularefatoracao.model.SolicitacaoCredito;
 import br.com.nogueiranogueira.aularefatoracao.service.ServicoAnaliseRisco;
-import br.com.nogueiranogueira.aularefatoracao.strategy.documento.ValidadorDocumentoStrategy;
 
 public abstract class AnaliseRiscoAdapterTemplate implements ServicoAnaliseRisco {
     public final boolean avaliarCredito(SolicitacaoCredito solicitacaoCredito) {
         /**
          * Valida o documento antes de qualquer chamada externa
          */
-        ValidadorDocumentoStrategy validador = ValidadorDocumentoFactory.obter(solicitacaoCredito.getDocumento());
+        boolean documentoValido = ValidadorDocumentoFactory.obter(solicitacaoCredito.getDocumento())
+                .map(v -> v.validar(solicitacaoCredito.getDocumento()))
+                .orElse(false);
 
-        if (!validador.validar(solicitacaoCredito.getDocumento())) {
+        if (!documentoValido) {
             return false;
         }
         try {
