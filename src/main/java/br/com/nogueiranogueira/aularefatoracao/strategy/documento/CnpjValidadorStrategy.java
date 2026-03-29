@@ -1,6 +1,6 @@
 package br.com.nogueiranogueira.aularefatoracao.strategy.documento;
 
-public class CnpjValidadorStrategy implements ValidadorDocumentoStrategy {
+public final class CnpjValidadorStrategy implements ValidadorDocumentoStrategy {
 
     @Override
     public boolean validar(String documento) {

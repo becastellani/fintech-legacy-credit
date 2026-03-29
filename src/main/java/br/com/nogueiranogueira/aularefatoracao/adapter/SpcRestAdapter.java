@@ -51,7 +51,7 @@ public class SpcRestAdapter extends AnaliseRiscoAdapterTemplate {
     protected boolean interpretarResposta(String resposta) {
         // A resposta simulada usa a chave "statusConsulta" com valor "APROVADO_BAIXO_RISCO"
         return resposta != null && resposta.contains("\"statusConsulta\": \"APROVADO");
-
+    }
     private String simularRespostaDaApiExterna() {
         return """
             {

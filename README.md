@@ -259,6 +259,24 @@ Este projeto é parte de um exercício de refatoração de código legado.
 ## 👨‍💻 Autor
 Bernardo Castellani, Cesar Pisa, Mario Wilhelms, Matheus Morilla, Mayumi Bogoni
 
+## Análise Técnica e Dívidas Técnicas
+
+**AnaliseCreditoService.java:**
+- Método `analisarSolicitacao()` com complexidade ciclomática alta - 7 níveis
+- Aninhamento profundo de estruturas condicionais (if dentro de if dentro de if)
+- Uso de `Date` depreciado (`new Date().getDay()`)
+- Falta de separação de responsabilidades
+- Hardcoded valores de regras de negócio (5000, 800, 50000, 700, etc.)
+- Ausência de validação de entrada
+- Lógica duplicada entre PF e PJ
+
+**ProcessadorVendaService.java:**
+- Verificar existência e implementação desta classe
+- Regras que podem ser separadas
+- Método `analisarSolicitacao()` com complexidade ciclomática alta - 7 níveis
+- Separar em enums para tipos de conta
+- Separar as 'palavras soltas' como imposto, valor, frete...
+
 ## 🧩 Exercício 1 - Atividade 1: Criar a Linha de Produto de Software de Crédito
 
 ### Core Assets
