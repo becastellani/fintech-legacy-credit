@@ -1,6 +1,6 @@
 package br.com.nogueiranogueira.aularefatoracao.adapter;
 
-import br.com.nogueiranogueira.aularefatoracao.factory.ValidadorDocumentoFactory;
+import org.becastellani.validador.factory.ValidadorDocumentoFactory;
 import br.com.nogueiranogueira.aularefatoracao.model.SolicitacaoCredito;
 import br.com.nogueiranogueira.aularefatoracao.service.ServicoAnaliseRisco;
 

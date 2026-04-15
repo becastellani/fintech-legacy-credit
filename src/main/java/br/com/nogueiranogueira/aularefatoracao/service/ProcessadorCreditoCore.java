@@ -1,7 +1,7 @@
 package br.com.nogueiranogueira.aularefatoracao.service;
 
 import br.com.nogueiranogueira.aularefatoracao.factory.AnalisePaisStrategyFactory;
-import br.com.nogueiranogueira.aularefatoracao.factory.ValidadorDocumentoFactory;
+import org.becastellani.validador.factory.ValidadorDocumentoFactory;
 import br.com.nogueiranogueira.aularefatoracao.model.SolicitacaoCredito;
 import br.com.nogueiranogueira.aularefatoracao.strategy.analisePais.AnalisePaisStrategy;
 import lombok.extern.slf4j.Slf4j;

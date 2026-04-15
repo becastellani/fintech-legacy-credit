@@ -26,7 +26,6 @@ public class SerasaSoapAdapter extends AnaliseRiscoAdapterTemplate {
     @Override
     protected String construirPayload(SolicitacaoCredito solicitacao) {
         log.info("[Adapter] Iniciando tradução do domínio para SOAP/XML...");
-        // 1. TRADUÇÃO DE IDA: objeto de domínio → payload XML
         String soapPayload = """
             <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:ser="http://serasa.com.br/ws">
                 <soapenv:Header/>
