@@ -10,8 +10,8 @@ import org.junit.Test;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import br.com.nogueiranogueira.aularefatoracao.model.constantes.DiaSemana;
-import br.com.nogueiranogueira.aularefatoracao.factory.ValidadorDocumentoFactory;
-import br.com.nogueiranogueira.aularefatoracao.strategy.documento.ValidadorDocumentoStrategy;
+import org.becastellani.validador.factory.ValidadorDocumentoFactory;
+import org.becastellani.validador.strategy.ValidadorDocumentoStrategy;
 
 import java.util.Arrays;
 import java.util.List;
